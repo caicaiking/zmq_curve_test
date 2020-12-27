@@ -11,7 +11,7 @@ static constexpr uint32_t server_port = public_key_server_port + 1;
 /**!
  * Get the server's public key from server
  * */
-std::string get_public_key()
+std::string get_server_public_key()
 {
     zmq::context_t ctx(1);
     zmq::socket_t public_socket(ctx, zmq::socket_type::dealer);
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
     zmq::socket_t client_socket(ctx, zmq::socket_type::dealer);
 
     //Get server public key
-    auto public_key_str = get_public_key();
+    auto public_key_str = get_server_public_key();
     //Set socket option curve_serverkey
     client_socket.set(zmq::sockopt::curve_serverkey, public_key_str);
 
