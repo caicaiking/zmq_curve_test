@@ -8,6 +8,9 @@
 static constexpr uint32_t public_key_server_port = 50000;
 static constexpr uint32_t server_port = public_key_server_port + 1;
 
+/**!
+ * Get the server's public key from server
+ * */
 std::string get_public_key()
 {
     zmq::context_t ctx(1);
@@ -44,19 +47,25 @@ std::string get_public_key()
 
 int main(int argc, char **argv)
 {
-    auto public_key_str = get_public_key();
     zmq::context_t ctx(1);
     zmq::socket_t client_socket(ctx, zmq::socket_type::dealer);
+
+    //Get server public key
+    auto public_key_str = get_public_key();
+    //Set socket option curve_serverkey
     client_socket.set(zmq::sockopt::curve_serverkey, public_key_str);
 
     char client_pub_key[64] = {0};
     char client_pri_key[64] = {0};
+    //Generate client public key and private key
     zmq_curve_keypair(client_pub_key, client_pri_key);
+    //Set socket options
     client_socket.set(zmq::sockopt::curve_publickey, client_pub_key);
     client_socket.set(zmq::sockopt::curve_secretkey, client_pri_key);
 
     boost::format fmt("tcp://%1%:%2%");
     std::string connect_string = (fmt % ("localhost") % (server_port)).str();
+    //Connect to the server
     client_socket.connect(connect_string);
 
     int count{};
@@ -66,9 +75,9 @@ int main(int argc, char **argv)
         boost::format fmt("I say %1%");
         msgs.pushstr((fmt % (++count)).str());
         std::cout << "send msg: " << msgs.back().to_string_view() << std::endl;
-        msgs.send(client_socket);
+        msgs.send(client_socket); //Send message
 
-        msgs.recv(client_socket);
+        msgs.recv(client_socket); //Recv message
         std::cout << "recv msg: " << msgs.back().to_string_view() << std::endl;
         getchar();
     }
